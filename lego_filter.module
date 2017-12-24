@@ -1,0 +1,54 @@
+<?php
+
+function lego_help($section) {
+  if ($section == 'admin/modules#description')
+    return t('Allow "set" and "part" codes in posts.');
+}
+
+function lego_filter_tips($delta, $format, $long = false) {
+  if ($long) {
+    include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_help.inc');
+    return _lego_filter_tip();
+  }
+  else {
+    $output = t('You can use [set:XXXXX] and [part:XXXXX] tags in the text.');
+    return $output;
+  }
+}
+
+function lego_filter_filter($op, $delta = 0, $format = -1, $text = '') {
+  switch ($op) {
+    case 'list':
+      return array(0 => t('LEGO Filter'));
+
+    case 'description':
+      return t('Converts [set] and [part] tags to HTML.');
+
+    case 'process':
+      include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+      return _lego_filter_process($text, $format);
+
+    case 'settings':
+      $form = array();
+      $form['lego_filter'] = array(
+        '#type' => 'fieldset', 
+        '#title' => t('LEGO filter'), 
+        '#collapsible' => TRUE, 
+        '#collapsed' => FALSE);
+      $form['lego_filter']["rebrickable_api_key"] = array(
+        '#type' => 'textfield', 
+        '#title' => t('Rebrickable API Key'), 
+        '#default_value' => variable_get("rebrickable_api_key", ''), 
+        '#description' => t('API Key from rebrickable.com, required for data lookups.'));
+      $form['lego_filter']["brickset_api_key"] = array(
+        '#type' => 'textfield', 
+        '#title' => t('Brickset API Key'), 
+        '#default_value' => variable_get("brickset_api_key", ''), 
+        '#description' => t('API Key from brickset.com, required for data lookups.'));
+      return $form;
+
+    default:
+      return $text;
+  }
+}
+

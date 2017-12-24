@@ -1,0 +1,5 @@
+name = LEGO Filter
+description = Allow LEGO sets and parts to be referenced in posts.
+package = "Input filters"
+core = 6.x
+
