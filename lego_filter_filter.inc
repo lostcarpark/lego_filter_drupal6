@@ -8,8 +8,8 @@ function _lego_filter_process(&$body, $format = -1) {
   $preg = array(
     // Convert part no to picture
     '#\[part\:\s*([0-9a-zA-Z]+)?\s*\]#sie' => '_lego_part_tag(\'\\1\')',
-    '#\[part\:\s*([0-9a-zA-Z]+)?\s+colo[u]?r\:\s*([-_0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
-    '#\[part\:\s*([0-9a-zA-Z]+)?\s*[,;]\s*([-_0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
+    '#\[part\:\s*([0-9a-zA-Z]+)?\s+colo[u]?r\:\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
+    '#\[part\:\s*([0-9a-zA-Z]+)?\s*[,;]\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
   );
   $body = preg_replace(array_keys($preg), array_values($preg), $body);
   
@@ -114,6 +114,17 @@ function _lego_fetch_part_color($part_num, $color, $reset = FALSE) {
   }
 }
 
+function _lego_color_table() {
+  $colors = _lego_fetch_colors();
+  $table = '<table>';
+  $table .= '<tr><th>'.t('Color ID').'</th><th>'.t('Color name').'</th><th>'.t('LEGO name').'</th><th>'.t('Alternative names').'</th><th>'.t('Sample').'</th></tr>';
+  foreach($colors->ids as $color) {
+    $table .= '<tr><td>'.$color->id.'</td><td>'.$color->name.'</td><td>'.$color->legoname.'</td><td>'.$color->alternatives.'</td><td style="background-color: #'.$color->rgb.';">&nbsp;</td></tr>';
+  }
+  $table .= '</table>';
+  return $table;
+}
+
 function _lego_fetch_colors($reset = FALSE) {
   static $lego_colors;
   if (!isset($lego_colors) || $reset) {
@@ -123,32 +134,46 @@ function _lego_fetch_colors($reset = FALSE) {
     } else {
       // No cached data so fetch from Rebrickable.
       $colors = _lego_rebrickable_colors_fetch();
+      dpm($colors);
       $ids = [];
       $names = [];
       foreach ($colors->results as $color) {
         // Store the AFOL name and LEGO name under the ID.
-        $ids[$color->id] = (object) ['id' => $color->id, 'name' => $color->name, 'legoname' => $color->external_ids->LEGO->ext_descrs[0][0]];
-        $names[strtolower($color->name)] = (object) ['id' => $color->id]; // Always store the Rebrickable name, so they will take priority.
+        $legoname = $color->external_ids->LEGO->ext_descrs[0][0];
+        $ids[$color->id] = (object) ['id' => $color->id, 'name' => $color->name, 'legoname' => $legoname, 'rgb' => $color->rgb];
+        $lower_name = strtolower($color->name);
+        $lower_lego = strtolower($legoname);
+        $names[$lower_name] = (object) ['id' => $color->id]; // Always store the Rebrickable name, so they will take priority.
         // Iterate through all known alternative names.
+        $alt_names = '';
+        $alt_sep = '';
         foreach($color->external_ids as $exts)
-          foreach($exts->ext_descrs as $descs)
-            foreach($descs as $desc) {
-              $lower = strtolower($desc); // Index under lower case names for case insensitive lookups.
-              if (!empty($lower) && !isset($names[$lower])) // Only add name if not already present, so won't override a Rebrickable name with an alternative.
-                $names[$lower] = (object) ['id' => $color->id];
+          foreach($exts->ext_descrs as $alts)
+            foreach($alts as $altname) {
+              $lower_alt = strtolower($altname); // Index under lower case names for case insensitive lookups.
+              if (!empty($lower_alt) && !isset($names[$lower_alt])) // Only add name if not already present, so won't override a Rebrickable name with an alternative.
+                $names[$lower_alt] = (object) ['id' => $color->id];
+              if (!empty($altname) && $lower_alt != $lower_name && $lower_alt != $lower_lego) {
+                $alt_names .= $alt_sep . $altname;
+                $alt_sep = ', ';
+              }
             }
+        $ids[$color->id]->alternatives = $alt_names;
       }
       // Finally, add our own name variants.
+      $ids[71]->alternatives .= ", LBG, Light Bley, LtBley, Bley";
       $names['lbg'] = (object) ['id' => 71];
       $names['light bley'] = (object) ['id' => 71];
       $names['ltbley'] = (object) ['id' => 71];
       $names['bley'] = (object) ['id' => 71];
+      $ids[72]->alternatives .= ", DBG, Dark Bley, DkBley";
       $names['dbg'] = (object) ['id' => 72];
       $names['dark bley'] = (object) ['id' => 72];
       $names['dkbley'] = (object) ['id' => 72];
       ksort($names);
       // Combine IDs and names into object.
       $lego_colors = (object) ['ids' => $ids, 'names' => $names];
+      dpm($lego_colors);
       // Store in the cache for 24 hours.
       cache_set('lego_filter_colors', $lego_colors, 'cache', time() + 86400);
     }

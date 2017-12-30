@@ -1,17 +1,18 @@
 <?php
 
-function lego_help($section) {
+function lego_filter_help($section) {
   if ($section == 'admin/modules#description')
-    return t('Allow "set" and "part" codes in posts.');
+    return t('Allow "part" codes in posts.');
 }
 
-function lego_filter_tips($delta, $format, $long = false) {
+function lego_filter_filter_tips($delta, $format, $long = false) {
+
   if ($long) {
     include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_help.inc');
     return _lego_filter_tip();
   }
   else {
-    $output = t('You can use [set:XXXXX] and [part:XXXXX] tags in the text.');
+    $output = t('You can use !Part tags in the text.', array('!Part' =>  l(t('[part]'), "filter/tips/$format", array('fragment' => 'filter-lego_filter-' . $delta))));
     return $output;
   }
 }
