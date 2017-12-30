@@ -1,7 +1,9 @@
 <?php
 
 define("REBRICKABLE_URL", "https://rebrickable.com/api/v3/lego/");
+define("BRICKSET_PART_URL", "https://brickset.com/parts?query=");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
+define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
 function _lego_filter_process(&$body, $format = -1) {
   // Define Lego tags
@@ -24,7 +26,9 @@ function _lego_part_tag($part = NULL, $color = NULL) {
     $colorname = '';
     $element = '';
     $rebrickable_link = '';
+    $brickset_link = '';
     $bricklink_link = '';
+    $brickowl_link = '';
     if (isset($color)) {
       $colors = _lego_fetch_colors();
       // If color name, look up
@@ -51,16 +55,20 @@ function _lego_part_tag($part = NULL, $color = NULL) {
     }
     if (isset($lego_part->part_url))
       $rebrickable_link = '<a href="'.$lego_part->part_url.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" /></a>';
+    $brickset_link = '<a href="'.BRICKSET_PART_URL.$lego_part->part_num.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a>';
     $bricklink_link = '<a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" /></a>';
+    if (isset($lego_part->brickowl_id))
+      $brickowl_link = '<a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" /></a>';
     // Get clickable Rebrickable icon.
-    return '<div><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'"><br /><b>'.$lego_part->part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$bricklink_link.$element.'</b></div>';
+    return '<div><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'"><br /><b>'.$lego_part->part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</b></div>';
   } else {
     return '<div>'.t('Unknown part: %part', ['%part' => $part]).'</div>';
   }
 }
 
 function _lego_fetch_part($part_num, $reset = FALSE) {
-  if (!$reset && ($cache = cache_get('lego_filter_parts_'.$part_num))) {
+  $cache_key = 'lego_filter_parts_'.$part_num;
+  if (!$reset && ($cache = cache_get($cache_key))) {
     // Use cached part data.
     return $cache->data;
   } else {
@@ -78,8 +86,11 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
         $lego_part->bricklink_id = $part_info->external_ids->BrickLink[0];
       else
         $lego_part->bricklink_id = $part_info->part_num;
+      if (isset($part_info->external_ids->BrickOwl[0]))
+        $lego_part->brickowl_id = $part_info->external_ids->BrickOwl[0];
+      dpm($lego_part);
       // Save part to cache.
-      
+      cache_set($cache_key, $lego_part, 'cache', time() + 86400);
       return $lego_part;
     } else {
       return NULL;
@@ -89,7 +100,6 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
 
 function _lego_fetch_part_color($part_num, $color, $reset = FALSE) {
   $cache_key = 'lego_filter_parts_'.$part_num.'_color_'.$color;
-  
   if (!$reset && ($cache = cache_get($cache_key))) {
     // Use cached part data.
     return $cache->data;
@@ -134,7 +144,6 @@ function _lego_fetch_colors($reset = FALSE) {
     } else {
       // No cached data so fetch from Rebrickable.
       $colors = _lego_rebrickable_colors_fetch();
-      dpm($colors);
       $ids = [];
       $names = [];
       foreach ($colors->results as $color) {
@@ -173,7 +182,6 @@ function _lego_fetch_colors($reset = FALSE) {
       ksort($names);
       // Combine IDs and names into object.
       $lego_colors = (object) ['ids' => $ids, 'names' => $names];
-      dpm($lego_colors);
       // Store in the cache for 24 hours.
       cache_set('lego_filter_colors', $lego_colors, 'cache', time() + 86400);
     }
