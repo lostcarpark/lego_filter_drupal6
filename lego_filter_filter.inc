@@ -88,7 +88,6 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
         $lego_part->bricklink_id = $part_info->part_num;
       if (isset($part_info->external_ids->BrickOwl[0]))
         $lego_part->brickowl_id = $part_info->external_ids->BrickOwl[0];
-      dpm($lego_part);
       // Save part to cache.
       cache_set($cache_key, $lego_part, 'cache', time() + 86400);
       return $lego_part;
