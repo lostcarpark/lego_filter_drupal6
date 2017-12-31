@@ -1,7 +1,7 @@
 <?php
 
 define("REBRICKABLE_URL", "https://rebrickable.com/api/v3/lego/");
-define("BRICKSET_PART_URL", "https://brickset.com/parts?query=");
+define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
 define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
@@ -55,10 +55,10 @@ function _lego_part_tag($part = NULL, $color = NULL) {
     }
     if (isset($lego_part->part_url))
       $rebrickable_link = '<a href="'.$lego_part->part_url.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" /></a>';
-    $brickset_link = '<a href="'.BRICKSET_PART_URL.$lego_part->part_num.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a>';
+    if (isset($lego_part->brickset_id))
+      $brickset_link = '<a href="'.BRICKSET_PART_URL.$lego_part->brickset_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a>';
     $bricklink_link = '<a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" /></a>';
-    if (isset($lego_part->brickowl_id))
-      $brickowl_link = '<a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" /></a>';
+    $brickowl_link = '<a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" /></a>';
     // Get clickable Rebrickable icon.
     return '<div><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'"><br /><b>'.$lego_part->part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</b></div>';
   } else {
@@ -74,6 +74,7 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
   } else {
     // Fetch the part data.
     $part_info = _lego_rebrickable_part_fetch($part_num);
+    //dpm($part_info);
     if (isset($part_info->part_num)) {
       // Save the properties we need into a new object.
       $lego_part = (object) [
@@ -82,12 +83,21 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
         'part_url' => $part_info->part_url,
         'part_img_url' => $part_info->part_img_url,
       ];
+      // Look up BrickLink ID, if different.
       if (isset($part_info->external_ids->BrickLink[0]))
         $lego_part->bricklink_id = $part_info->external_ids->BrickLink[0];
       else
         $lego_part->bricklink_id = $part_info->part_num;
+      // Look up BrickOwl ID, if different.
       if (isset($part_info->external_ids->BrickOwl[0]))
         $lego_part->brickowl_id = $part_info->external_ids->BrickOwl[0];
+      else
+        $lego_part->brickowl_id = $part_info->part_num;
+      // Check if part exists on BrickSet for part number.
+      if (is_numeric($part_info->part_num))
+        $lego_part->brickset_id = $part_info->part_num;
+      elseif (isset($part_info->external_ids->LEGO[0]) && is_numeric($part_info->external_ids->LEGO[0]))
+        $lego_part->brickset_id = $part_info->external_ids->LEGO[0];
       // Save part to cache.
       cache_set($cache_key, $lego_part, 'cache', time() + 86400);
       return $lego_part;
@@ -237,6 +247,20 @@ function _lego_json_fetch($url) {
     return $part_info;
   } else {
     return null;
+  }
+
+}
+
+function _lego_brickset_verify_url($url) {
+
+  $data = @file_get_contents($url);
+  if (preg_match('/200/', $http_response_header[0])) {
+    if (preg_match('/<div class="results">0 to 0/', $data))
+      return FALSE;
+    else
+      return TRUE;
+  } else {
+    return FALSE;
   }
 
 }
