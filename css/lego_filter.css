@@ -1,0 +1,22 @@
+.lego-filter-part {
+  font-size: .9em;
+  font-weight: bold;
+}
+
+.lego-filter-part-image {
+  max-width: 150px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+}
+
+.lego-filter-rebrickable-icon, .lego-filter-brickset-icon, .lego-filter-bricklink-icon, .lego-filter-brickowl-icon {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  padding: 2px;
+  margin: 2px;
+}
+
+.lego-filter-rebrickable-icon img, .lego-filter-brickset-icon img, .lego-filter-bricklink-icon img, .lego-filter-brickowl-icon img {
+  vertical-align: bottom;
+}

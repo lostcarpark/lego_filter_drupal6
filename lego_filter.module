@@ -53,3 +53,11 @@ function lego_filter_filter($op, $delta = 0, $format = -1, $text = '') {
   }
 }
 
+/**
+ * Implements of hook_preprocess_page()
+ */
+function lego_filter_preprocess_page(&$variables) {
+  $module_path = drupal_get_path('module', 'lego_filter');
+  drupal_add_css($module_path . '/css/lego_filter.css');
+  $variables['styles'] = drupal_get_css();
+}
