@@ -118,7 +118,7 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
       elseif (isset($part_info->external_ids->LEGO[0]) && is_numeric($part_info->external_ids->LEGO[0]))
         $lego_part->brickset_id = $part_info->external_ids->LEGO[0];
       // Save part to cache.
-      cache_set($cache_key, $lego_part, 'cache', time() + 86400);
+      cache_set($cache_key, $lego_part, 'cache', time() + _lego_cache_interval());
       return $lego_part;
     } else {
       return NULL;
@@ -144,7 +144,7 @@ function _lego_fetch_part_color($part_num, $color, $reset = FALSE) {
       if (isset($part_color->part_img_url))
         $lego_part->part_img_url = $part_color->part_img_url;
       // Store in the cache for 24 hours.
-      cache_set($cache_key, $lego_part, 'cache', time() + 86400);
+      cache_set($cache_key, $lego_part, 'cache', time() + _lego_cache_interval());
       return $lego_part;
     } else {
       return NULL;
@@ -212,7 +212,7 @@ function _lego_fetch_colors($reset = FALSE) {
       // Combine IDs and names into object.
       $lego_colors = (object) ['ids' => $ids, 'names' => $names];
       // Store in the cache for 24 hours.
-      cache_set('lego_filter_colors', $lego_colors, 'cache', time() + 86400);
+      cache_set('lego_filter_colors', $lego_colors, 'cache', time() + _lego_cache_interval());
     }
   }
   return $lego_colors;
@@ -295,7 +295,7 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
       if (isset($result->set_num)) {
         $set_info->rebrickableURL = $result->set_url;
       }
-      cache_set($cache_key, $set_info, 'cache', time() + 86400);
+      cache_set($cache_key, $set_info, 'cache', time() + _lego_cache_interval());
       return $set_info;
     } else {
       return NULL;
@@ -427,3 +427,10 @@ function _lego_brickset_verify_url($url) {
   }
 
 }
+
+function _lego_cache_interval() {
+  $min = 86400 * 7; // Minimum 7 days.
+  $max = 86400 * 14; // Maximum 14 days.
+  return rand($min, $max);
+}
+
