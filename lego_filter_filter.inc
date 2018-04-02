@@ -270,7 +270,7 @@ function _lego_set_tag($set = NULL) {
     if (isset($lego_set->legoURL))
       $lego_link = '<span class="lego-filter-lego-icon"><a href="'.$lego_set->legoURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/lego_icon.png" alt="LEGO" /></a></span>';
     if (isset($lego_set->brickcatURL))
-      $brickcat_link = '<span class="lego-filter-brickcat-icon"><a href="'.$lego_set->brickcatURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickcat_icon.png" alt="Brickset" /></a>'.$lego_set->brickcatCurrency.$lego_set->brickcatPrice.'</span>';
+      $brickcat_link = '<span class="lego-filter-brickcat-icon"><a href="'.$lego_set->brickcatURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickcat_icon.png" alt="Brickset" /></a>'.(!empty($lego_set->brickcatPrice) ? $lego_set->brickcatCurrency.number_format($lego_set->brickcatPrice, 2, '.', ',') : '').'</span>';
     return '<div class="lego-filter-set"><a href="'.$lego_set->imageURL.'" rel="lightbox" title="'.$lego_set->name.'"><img src="'.$lego_set->largeThumbnailURL.'" alt="'.$lego_set->name.'" class="lego-filter-set-image" /></a><br />'.$lego_set->displayNumber.': '.$lego_set->name.' ('.$lego_set->year.') '.$brickset_link.$rebrickable_link.$bricklink_link.$brickowl_link.$lego_link.$brickcat_link.'</div>';
   } else {
     return '<div>'.t('Unknown set: %set', ['%set' => $set]).'</div>';
