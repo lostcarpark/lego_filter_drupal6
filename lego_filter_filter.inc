@@ -71,11 +71,11 @@ function _lego_part_tag($part = NULL, $color = NULL) {
       }
     }
     if (isset($lego_part->part_url))
-      $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_part->part_url.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" />'.($lego_part->display_part_num != $lego_part->part_num ? $lego_part->part_num : '').'</a></span>';
+      $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_part->part_url.'" title="Rebrickable"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" />'.($lego_part->display_part_num != $lego_part->part_num ? $lego_part->part_num : '').'</a></span>';
     if (isset($lego_part->brickset_id))
-      $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.BRICKSET_PART_URL.$lego_part->brickset_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
-    $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
-    $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
+      $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.BRICKSET_PART_URL.$lego_part->brickset_id.'" title="Brickset"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
+    $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'" title="BrickLink"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="BrickLink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
+    $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'" title="Brick Owl"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="Brick Owl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
     // Get clickable Rebrickable icon.
     return '<div class="lego-filter-part"><a href="'.$lego_part->part_img_url.'" rel="lightbox" title="'.$lego_part->name.'"><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'" class="lego-filter-part-image" /></a><br />'.$lego_part->display_part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</div>';
   } else {
@@ -262,15 +262,15 @@ function _lego_set_tag($set = NULL) {
     $lego_link = '';
     $brickcat_link = '';
     if (isset($lego_set->bricksetURL))
-      $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.$lego_set->bricksetURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
+      $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.$lego_set->bricksetURL.'" title="Brickset"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
     if (isset($lego_set->rebrickableURL))
-      $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_set->rebrickableURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" /></a></span>';
-    $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.'http://www.bricklink.com/v2/search.page?q='.$lego_set->number.'&utm_source=brick.ie'.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
-    $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.'http://www.brickowl.com/search/catalog?query='.$lego_set->displayNumber.'&utm_source=brick.ie'.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
+      $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_set->rebrickableURL.'" title="Rebrickable"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" /></a></span>';
+    $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.'http://www.bricklink.com/v2/search.page?q='.$lego_set->number.'&utm_source=brick.ie'.'" title="BrickLink"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="BrickLink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
+    $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.'http://www.brickowl.com/search/catalog?query='.$lego_set->displayNumber.'&utm_source=brick.ie'.'" title="Brick Owl"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="Brick Owl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
     if (isset($lego_set->legoURL))
-      $lego_link = '<span class="lego-filter-lego-icon"><a href="'.$lego_set->legoURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/lego_icon.png" alt="LEGO" /></a></span>';
+      $lego_link = '<span class="lego-filter-lego-icon"><a href="'.$lego_set->legoURL.'" title="LEGO®"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/lego_icon.png" alt="LEGO" /></a></span>';
     if (isset($lego_set->brickcatURL))
-      $brickcat_link = '<span class="lego-filter-brickcat-icon"><a href="'.$lego_set->brickcatURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickcat_icon.png" alt="Brickset" /></a>'.(!empty($lego_set->brickcatPrice) ? $lego_set->brickcatCurrency.number_format($lego_set->brickcatPrice, 2, '.', ',') : '').'</span>';
+      $brickcat_link = '<span class="lego-filter-brickcat-icon"><a href="'.$lego_set->brickcatURL.'" title="BrickCat"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickcat_icon.png" alt="BrickCat" /></a>'.(!empty($lego_set->brickcatPrice) ? $lego_set->brickcatCurrency.number_format($lego_set->brickcatPrice, 2, '.', ',') : '').'</span>';
     return '<div class="lego-filter-set"><a href="'.$lego_set->imageURL.'" rel="lightbox" title="'.$lego_set->name.'"><img src="'.$lego_set->largeThumbnailURL.'" alt="'.$lego_set->name.'" class="lego-filter-set-image" /></a><br />'.$lego_set->displayNumber.': '.$lego_set->name.' ('.$lego_set->year.') '.$brickset_link.$rebrickable_link.$bricklink_link.$brickowl_link.$lego_link.$brickcat_link.'</div>';
   } else {
     return '<div>'.t('Unknown set: %set', ['%set' => $set]).'</div>';
