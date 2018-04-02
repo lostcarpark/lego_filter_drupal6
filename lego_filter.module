@@ -46,6 +46,16 @@ function lego_filter_filter($op, $delta = 0, $format = -1, $text = '') {
         '#title' => t('Brickset API Key'), 
         '#default_value' => variable_get("brickset_api_key", ''), 
         '#description' => t('API Key from brickset.com, required for data lookups.'));
+      $form['lego_filter']["brickcat_api_key"] = array(
+        '#type' => 'textfield', 
+        '#title' => t('BrickCat API Key'), 
+        '#default_value' => variable_get("brickcat_api_key", ''), 
+        '#description' => t('API Key from brickcat.com, required for data lookups.'));
+      $form['lego_filter']["brickcat_country"] = array(
+        '#type' => 'textfield', 
+        '#title' => t('BrickCat Country'), 
+        '#default_value' => variable_get("brickcat_country", ''), 
+        '#description' => t('2-char country code for BrickCat lookups.'));
       return $form;
 
     default:

@@ -7,6 +7,9 @@ define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
 define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
+
+require_once("brickcat_api.inc");
+
 function _lego_filter_process(&$body, $format = -1) {
   // Define Lego tags
   $preg = array(
@@ -74,7 +77,7 @@ function _lego_part_tag($part = NULL, $color = NULL) {
     $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
     $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
     // Get clickable Rebrickable icon.
-    return '<div class="lego-filter-part"><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'" class="lego-filter-part-image" /><br />'.$lego_part->display_part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</div>';
+    return '<div class="lego-filter-part"><a href="'.$lego_part->part_img_url.'" rel="lightbox" title="'.$lego_part->name.'"><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'" class="lego-filter-part-image" /></a><br />'.$lego_part->display_part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</div>';
   } else {
     return '<div>'.t('Unknown part: %part', ['%part' => $part]).'</div>';
   }
@@ -98,7 +101,9 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
         'part_img_url' => $part_info->part_img_url,
       ];
       // If LEGO ID available, us it in display.
-      if (isset($part_info->external_ids->LEGO[0]))
+      if (is_numeric($part_info->part_num))
+        $lego_part->display_part_num = $part_info->part_num;
+      elseif (isset($part_info->external_ids->LEGO[0]) && is_numeric($part_info->external_ids->LEGO[0]))
         $lego_part->display_part_num = $part_info->external_ids->LEGO[0];
       else
         $lego_part->display_part_num = $part_info->part_num;
@@ -254,13 +259,19 @@ function _lego_set_tag($set = NULL) {
     $brickset_link = '';
     $bricklink_link = '';
     $brickowl_link = '';
+    $lego_link = '';
+    $brickcat_link = '';
     if (isset($lego_set->bricksetURL))
       $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.$lego_set->bricksetURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
     if (isset($lego_set->rebrickableURL))
       $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_set->rebrickableURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" /></a></span>';
     $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.'http://www.bricklink.com/v2/search.page?q='.$lego_set->number.'&utm_source=brick.ie'.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="Bricklink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
     $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.'http://www.brickowl.com/search/catalog?query='.$lego_set->displayNumber.'&utm_source=brick.ie'.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="BrickOwl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
-    return '<div class="lego-filter-set"><img src="'.$lego_set->largeThumbnailURL.'" alt="'.$lego_set->name.'" class="lego-filter-set-image" /><br />'.$lego_set->displayNumber.': '.$lego_set->name.' ('.$lego_set->year.') '.$brickset_link.$rebrickable_link.$bricklink_link.$brickowl_link.'</div>';
+    if (isset($lego_set->legoURL))
+      $lego_link = '<span class="lego-filter-lego-icon"><a href="'.$lego_set->legoURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/lego_icon.png" alt="LEGO" /></a></span>';
+    if (isset($lego_set->brickcatURL))
+      $brickcat_link = '<span class="lego-filter-brickcat-icon"><a href="'.$lego_set->brickcatURL.'"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickcat_icon.png" alt="Brickset" /></a>'.$lego_set->brickcatCurrency.$lego_set->brickcatPrice.'</span>';
+    return '<div class="lego-filter-set"><a href="'.$lego_set->imageURL.'" rel="lightbox" title="'.$lego_set->name.'"><img src="'.$lego_set->largeThumbnailURL.'" alt="'.$lego_set->name.'" class="lego-filter-set-image" /></a><br />'.$lego_set->displayNumber.': '.$lego_set->name.' ('.$lego_set->year.') '.$brickset_link.$rebrickable_link.$bricklink_link.$brickowl_link.$lego_link.$brickcat_link.'</div>';
   } else {
     return '<div>'.t('Unknown set: %set', ['%set' => $set]).'</div>';
   }
@@ -294,6 +305,19 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
       $result = _lego_rebrickable_set_fetch($set_num);
       if (isset($result->set_num)) {
         $set_info->rebrickableURL = $result->set_url;
+      }
+      $brickCat = new BrickCatApi(variable_get("brickcat_api_key", ''));
+      $result = $brickCat->getBestPrice($set_info->number, variable_get("brickcat_country", ''));
+      if ($result->status) {
+        $set_info->brickcatURL = $result->link;
+        $set_info->brickcatPrice = $result->price;
+        if (isset($result->currency))
+          $set_info->brickcatCurrency = $result->currency;
+        else
+          $set_info->brickcatCurrency = $result->curreny;
+        $result = $brickCat->getLegoUrl($set_info->number, variable_get("brickcat_country", ''));
+        if ($result->status)
+          $set_info->legoURL = $result->link;
       }
       cache_set($cache_key, $set_info, 'cache', time() + _lego_cache_interval());
       return $set_info;

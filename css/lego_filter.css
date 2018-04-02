@@ -1,4 +1,4 @@
-.lego-filter-part {
+.lego-filter-part, .lego-filter-set {
   font-size: .9em;
   font-weight: bold;
 }
@@ -10,13 +10,13 @@
   height: auto;
 }
 
-.lego-filter-rebrickable-icon, .lego-filter-brickset-icon, .lego-filter-bricklink-icon, .lego-filter-brickowl-icon {
+.lego-filter-rebrickable-icon, .lego-filter-brickset-icon, .lego-filter-bricklink-icon, .lego-filter-brickowl-icon, .lego-filter-brickcat-icon, .lego-filter-lego-icon {
   background-color: #eee;
   border: 1px solid #ccc;
   padding: 2px;
   margin: 2px;
 }
 
-.lego-filter-rebrickable-icon img, .lego-filter-brickset-icon img, .lego-filter-bricklink-icon img, .lego-filter-brickowl-icon img {
+.lego-filter-rebrickable-icon img, .lego-filter-brickset-icon img, .lego-filter-bricklink-icon img, .lego-filter-brickowl-icon img, .lego-filter-brickcat-icon img, .lego-filter-lego-icon img {
   vertical-align: bottom;
 }
