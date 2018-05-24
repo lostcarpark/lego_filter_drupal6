@@ -5,6 +5,36 @@ function lego_filter_help($section) {
     return t('Allow "part" codes in posts.');
 }
 
+/**
+ * Implementation of hook_menu().
+ */
+function lego_filter_menu()
+{
+  $items['brick_filter/part/%/color'] = array(
+    'page callback' => 'lego_filter_part',
+    'page arguments' => array(
+      2,
+      4,
+    ),
+    'access arguments' => array('view set and part tags'),
+  );
+  $items['brick_filter/set/%'] = array(
+    'page callback' => 'lego_filter_set',
+    'page arguments' => array(
+      2,
+    ),
+    'access arguments' => array('view set and part tags'),
+  );
+  return $items;
+}
+
+function lego_filter_perm()
+{
+  return array(
+    'view set and part tags',
+  );
+}
+
 function lego_filter_filter_tips($delta, $format, $long = false) {
 
   if ($long) {
@@ -66,8 +96,39 @@ function lego_filter_filter($op, $delta = 0, $format = -1, $text = '') {
 /**
  * Implements of hook_preprocess_page()
  */
-function lego_filter_preprocess_page(&$variables) {
+function lego_filter_preprocess_page(&$variables)
+{
   $module_path = drupal_get_path('module', 'lego_filter');
   drupal_add_css($module_path . '/css/lego_filter.css');
   $variables['styles'] = drupal_get_css();
 }
+
+/**
+ * Implements of hook_init()
+ */
+function lego_filter_init()
+{
+  $module_path = drupal_get_path('module', 'lego_filter');
+  drupal_add_js($module_path . '/js/brick_filter.js', 'module', 'header');
+}
+
+
+function lego_filter_part($part, $color)
+{
+  // Print out HTML directly.
+  include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+  print (_lego_part_snippit($part, $color));
+  // Return success.
+  exit(0);
+}
+
+function lego_filter_set($set)
+{
+  // Print out HTML directly.
+  include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+  print (_lego_set_snippit($set));
+  // Return success.
+  exit(0);
+}
+
+

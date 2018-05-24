@@ -3,3 +3,5 @@ description = Allow LEGO sets and parts to be referenced in posts.
 package = "Input filters"
 core = 6.x
 stylesheets[all][] = css/lego_filter.css
+scripts[] = js/brick_filter.js
+

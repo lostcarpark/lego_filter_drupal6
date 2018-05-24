@@ -30,7 +30,14 @@ function _lego_filter_process(&$body, $format = -1) {
  * Functions for converting part tags.
  */
 
-function _lego_part_tag($part = NULL, $color = NULL) {
+function _lego_part_tag($part = NULL, $color = NULL)
+{
+  // Display placeholder for JavaScript to replace with part image...
+  return '<div class="brick-filter-part" part="'.$part.'" color="'.$color.'">Fetching part '.$part.'...</div>';
+}
+
+function _lego_part_snippit($part = NULL, $color = NULL)
+{
   $lego_part = _lego_fetch_part($part);
   //dpm($lego_part);
   if (isset($lego_part)) {
@@ -42,7 +49,7 @@ function _lego_part_tag($part = NULL, $color = NULL) {
     $brickset_link = '';
     $bricklink_link = '';
     $brickowl_link = '';
-    if (isset($color)) {
+    if (!empty($color)) {
       $colors = _lego_fetch_colors();
       // If color name, look up
       if (!is_numeric($color)) {
@@ -177,7 +184,7 @@ function _lego_fetch_colors($reset = FALSE) {
     } else {
       // No cached data so fetch from Rebrickable.
       $colors = _lego_rebrickable_colors_fetch();
-      //dpm($colors);
+//dd($colors);
       $ids = [];
       $names = [];
       foreach ($colors->results as $color) {
@@ -253,6 +260,12 @@ function _lego_rebrickable_part_fetch($part_no) {
 
 
 function _lego_set_tag($set = NULL) {
+  // Display placeholder for JavaScript to replace with part image...
+  return '<div class="brick-filter-set" set="'.$set.'">Fetching set '.$set.'...</div>';
+}
+
+function _lego_set_snippit($set = NULL)
+{
   $lego_set = _lego_fetch_set($set);
   if (isset($lego_set->number)) {
     $rebrickable_link = '';
@@ -382,7 +395,7 @@ function _lego_rebrickable_colors_fetch() {
 function _lego_rebrickable_colors_url() {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."/colors/?key=$key";
+  return REBRICKABLE_API_URL."/colors/?key=$key&page_size=500";
 
 }
 
