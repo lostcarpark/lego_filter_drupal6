@@ -466,8 +466,8 @@ function _lego_brickset_verify_url($url) {
 }
 
 function _lego_cache_interval() {
-  $min = 86400 * 7; // Minimum 7 days.
-  $max = 86400 * 14; // Maximum 14 days.
+  $min = 3600 * 12; // Minimum 12 hours.
+  $max = 3600 * 24; // Maximum 24 hours.
   return rand($min, $max);
 }
 
