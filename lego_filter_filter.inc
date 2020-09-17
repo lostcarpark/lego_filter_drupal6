@@ -1,7 +1,7 @@
 <?php
 
 define("REBRICKABLE_API_URL", "https://rebrickable.com/api/v3/lego/");
-define("BRICKSET_API_URL", "https://brickset.com/api/v2.asmx");
+define("BRICKSET_API_URL", "https://brickset.com/api/v3.asmx");
 
 define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
@@ -298,19 +298,19 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
   } else {
     // Fetch the set data.
     $result = _lego_brickset_set_fetch($set_num);
-    if (isset($result->sets->number)) {
+    if (isset($result->sets[0]->number)) {
       $set_info = (object) [
-        'number' => (string)$result->sets->number,
-        'numberVariant' => (string)$result->sets->numberVariant,
-        'name' => (string)$result->sets->name,
-        'year' => (string)$result->sets->year,
-        'theme' => (string)$result->sets->theme,
-        'themeGroup' => (string)$resultset_info->sets->themeGroup,
-        'subtheme' => (string)$result->sets->subtheme,
-        'thumbnailURL' => (string)$result->sets->thumbnailURL,
-        'largeThumbnailURL' => (string)$result->sets->largeThumbnailURL,
-        'imageURL' => (string)$result->sets->imageURL,
-        'bricksetURL' => (string)$result->sets->bricksetURL,
+        'number' => (string)$result->sets[0]->number,
+        'numberVariant' => (string)$result->sets[0]->numberVariant,
+        'name' => (string)$result->sets[0]->name,
+        'year' => (string)$result->sets[0]->year,
+        'theme' => (string)$result->sets[0]->theme,
+        'themeGroup' => (string)$result->sets[0]->themeGroup,
+        'subtheme' => (string)$result->sets[0]->subtheme,
+        'thumbnailURL' => (string)$result->sets[0]->image->thumbnailURL,
+        'largeThumbnailURL' => (string)$result->sets[0]->image->thumbnailURL,
+        'imageURL' => (string)$result->sets[0]->image->imageURL,
+        'bricksetURL' => (string)$result->sets[0]->bricksetURL,
       ];
       // Combine number and variant into display number.
       $set_info->displayNumber = $set_info->number.'-'.$set_info->numberVariant;
@@ -375,7 +375,7 @@ function _lego_rebrickable_brickowl_part_url($part) {
 
 function _lego_rebrickable_part_color_fetch($part, $color) {
 
-  return _lego_json_fetch(_lego_rebrickable_part_color_url($part, $color));
+  return _lego_json_fetch(_lego_rebrickable_part_color_url($part, $color), TRUE);
 
 }
 
@@ -388,7 +388,7 @@ function _lego_rebrickable_part_color_url($part, $color) {
 
 function _lego_rebrickable_colors_fetch() {
 
-  return _lego_json_fetch(_lego_rebrickable_colors_url());
+  return _lego_json_fetch(_lego_rebrickable_colors_url(), TRUE);
 
 }
 
@@ -408,29 +408,30 @@ function _lego_rebrickable_set_url($set) {
 
 function _lego_rebrickable_set_fetch($set) {
 
-  return _lego_json_fetch(_lego_rebrickable_set_url($set));
+  return _lego_json_fetch(_lego_rebrickable_set_url($set), TRUE);
 
 }
 
 function _lego_brickset_set_url($set) {
 
   $key = variable_get("brickset_api_key", '');
-  return BRICKSET_API_URL."/getSets?apiKey=$key&userHash=&query=&theme=&subtheme=&setNumber=$set&year=&owned=&wanted=&orderBy=&pageSize=&pageNumber=&userName=";
+  return BRICKSET_API_URL."/getSets?apiKey=$key&userHash=&params={\"setNumber\":\"$set\"}";
 
 }
 
 function _lego_brickset_set_fetch($set_no) {
 
-  $set_info = _lego_xml_fetch(_lego_brickset_set_url($set_no));
+  $set_info = _lego_json_fetch(_lego_brickset_set_url($set_no), FALSE);
   return $set_info;
 
 }
 
 
-function _lego_json_fetch($url) {
+function _lego_json_fetch($url, $sleep=TRUE) {
 
   // Sleep for between 1 and 10 seconds to spread out requests.
-  sleep(rand(1, 10));
+  if ($sleep)
+    sleep(rand(1, 10));
   while ($json = @file_get_contents($url)) {
     if (preg_match('/200/', $http_response_header[0])) {
       $part_info = json_decode($json);
