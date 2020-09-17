@@ -429,12 +429,18 @@ function _lego_brickset_set_fetch($set_no) {
 
 function _lego_json_fetch($url) {
 
-  $json = @file_get_contents($url);
-  if (preg_match('/200/', $http_response_header[0])) {
-    $part_info = json_decode($json);
-    return $part_info;
-  } else {
-    return null;
+  // Sleep for between 1 and 10 seconds to spread out requests.
+  sleep(rand(1, 10));
+  while ($json = @file_get_contents($url)) {
+    if (preg_match('/200/', $http_response_header[0])) {
+      $part_info = json_decode($json);
+      return $part_info;
+    } else if (preg_match('/429/', $http_response_header[0])) {
+      // 429 return code means too many calls. Sleep for a random number of seconds and try again.
+      sleep(rand(5, 30));
+    } else {
+      return null;
+    }
   }
 
 }
