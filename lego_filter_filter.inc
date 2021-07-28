@@ -319,6 +319,28 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
       if (isset($result->set_num)) {
         $set_info->rebrickableURL = $result->set_url;
       }
+    }
+    else {
+      // Set not found on Brickset. See if we can get from Rebrickable...
+      $result = _lego_rebrickable_set_fetch($set_num);
+      if (isset($result->set_num)) {
+        $set_num = explode('-', $result->set_num);
+        $set_info = (object) [
+          'number' => $set_num[0],
+          'numberVariant' => $set_num[1],
+          'displayNumber' => $result->set_num,
+          'name' => $result->name,
+          'year' => $result->year,
+          'thumbnailURL' => $result->set_img_url,
+          'largeThumbnailURL' => $result->set_img_url,
+          'imageURL' => $result->set_img_url,
+          'rebrickableURL' => $result->set_url,
+        ];
+        
+      }
+    }
+    // If a set was found from either Briskset or Rebrickable, 
+    if (!empty($set_info) && !empty($set_info->number)) {
       $brickCat = new BrickCatApi(variable_get("brickcat_api_key", ''));
       $result = $brickCat->getBestPrice($set_info->number, variable_get("brickcat_country", ''));
       if ($result->status) {
@@ -409,6 +431,13 @@ function _lego_rebrickable_set_url($set) {
 function _lego_rebrickable_set_fetch($set) {
 
   return _lego_json_fetch(_lego_rebrickable_set_url($set), TRUE);
+
+}
+
+function _lego_brickset_check_url() {
+
+  $key = variable_get("brickset_api_key", '');
+  return BRICKSET_API_URL."/checkKey?apiKey=$key";
 
 }
 
