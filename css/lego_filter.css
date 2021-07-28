@@ -10,6 +10,14 @@
   height: auto;
 }
 
+.lego-filter-set-image {
+  max-width: 150px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+}
+
+
 .lego-filter-rebrickable-icon, .lego-filter-brickset-icon, .lego-filter-bricklink-icon, .lego-filter-brickowl-icon, .lego-filter-brickcat-icon, .lego-filter-lego-icon {
   background-color: #eee;
   border: 1px solid #ccc;
