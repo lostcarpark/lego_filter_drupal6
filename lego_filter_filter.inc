@@ -39,7 +39,6 @@ function _lego_part_tag($part = NULL, $color = NULL)
 function _lego_part_snippit($part = NULL, $color = NULL)
 {
   $lego_part = _lego_fetch_part($part);
-  //dpm($lego_part);
   if (isset($lego_part)) {
     // Use Rebrickable ID in further searches.
     $part = $lego_part->part_num;
@@ -98,7 +97,6 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
   } else {
     // Fetch the part data.
     $part_info = _lego_rebrickable_part_fetch($part_num);
-    //dpm($part_info);
     if (isset($part_info->part_num)) {
       // Save the properties we need into a new object.
       $lego_part = (object) [
@@ -184,7 +182,6 @@ function _lego_fetch_colors($reset = FALSE) {
     } else {
       // No cached data so fetch from Rebrickable.
       $colors = _lego_rebrickable_colors_fetch();
-//dd($colors);
       $ids = [];
       $names = [];
       foreach ($colors->results as $color) {
@@ -233,23 +230,29 @@ function _lego_fetch_colors($reset = FALSE) {
 
 function _lego_rebrickable_part_fetch($part_no) {
 
-  $part_info = _lego_json_fetch(_lego_rebrickable_part_url($part_no));
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_lego_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
+  // Use the Rebrickable part search call. This allows multiple external IDs to be matched with a single call.
+  $results = _lego_json_fetch(_lego_rebrickable_search_part_url($part_no));
+  if (!empty($results) && $results->count > 0) {
+    // There could be several parts returned (e.g. printed parts will generally also return the unprinted version.
+    // Loop through found parts to check at least one part number matches.
+    foreach ($results->results as $part) {
+      // Match on Rebrickable part no.
+      if ($part->part_num == $part_no) {
+        return $part;
+      }
+      // Check if any external ID matches.
+      if (isset($part->external_ids)) {
+        foreach ($part->external_ids as $extid) {
+          if ($extid[0] == $part_no) {
+            return $part;
+          }
+        }
+      }
+    }
   }
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_bricklink_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
-  }
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_brickowl_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
-  }
-  return $part_info;
+
+  // Nothing found, so return null.
+  return NULL;
 
 }
 
@@ -370,28 +373,35 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
 function _lego_rebrickable_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/$part/?key=$key";
+  return REBRICKABLE_API_URL."parts/?part_num=$part&key=$key";
 
 }
 
 function _lego_rebrickable_lego_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?lego_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?lego_id=$part&key=$key";
 
 }
 
 function _lego_rebrickable_bricklink_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?bricklink_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?bricklink_id=$part&key=$key";
 
 }
 
 function _lego_rebrickable_brickowl_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?brickowl_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?brickowl_id=$part&key=$key";
+
+}
+
+function _lego_rebrickable_search_part_url($part) {
+
+  $key = variable_get("rebrickable_api_key", '');
+  return REBRICKABLE_API_URL."parts/?search=$part&key=$key";
 
 }
 
