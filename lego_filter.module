@@ -2,7 +2,7 @@
 
 function lego_filter_help($section) {
   if ($section == 'admin/modules#description')
-    return t('Allow "part" codes in posts.');
+    return t('Allow "part", "element" and "set" tags in posts.');
 }
 
 /**
@@ -18,11 +18,23 @@ function lego_filter_menu()
     ),
     'access arguments' => array('view set and part tags'),
   );
+  $items['brick_filter/element/%'] = array(
+    'page callback' => 'lego_filter_element',
+    'page arguments' => array(
+      2,
+    ),
+    'access arguments' => array('view set and part tags'),
+  );
   $items['brick_filter/set/%'] = array(
     'page callback' => 'lego_filter_set',
     'page arguments' => array(
       2,
     ),
+    'access arguments' => array('view set and part tags'),
+  );
+  $items['brick_filter/test/sets'] = array(
+    'title' => 'Brick FIlter Test - Sets',
+    'page callback' => 'lego_filter_test_set',
     'access arguments' => array('view set and part tags'),
   );
   return $items;
@@ -122,6 +134,15 @@ function lego_filter_part($part, $color)
   exit(0);
 }
 
+function lego_filter_element($element)
+{
+  // Print out HTML directly.
+  include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+  print (_lego_element_snippit($element, $color));
+  // Return success.
+  exit(0);
+}
+
 function lego_filter_set($set)
 {
   // Print out HTML directly.
@@ -131,4 +152,12 @@ function lego_filter_set($set)
   exit(0);
 }
 
+function lego_filter_test_set()
+{
+  include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+  $content = "<div>This page is to test LEGO set tags.</div>";
+  $content .= '<div>Checking Key' . file_get_contents(_lego_brickset_check_url()) . '</div>';
+  $content .= '<div>Rebrickable set results: ' . print_r(_lego_rebrickable_set_fetch('928-1'), TRUE) . '</div>';
+  return $content;
+}
 

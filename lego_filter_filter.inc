@@ -7,6 +7,9 @@ define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
 define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
+// The order to rank sources in. Lower is more desirable.
+const SOURCES = ['BrickLink', 'Rebrickable', 'LEGO', 'Brickset', 'LDraw', 'BrickOwl'];
+
 
 require_once("brickcat_api.inc");
 
@@ -17,6 +20,7 @@ function _lego_filter_process(&$body, $format = -1) {
     '#\[part\:\s*([0-9a-zA-Z]+)?\s*\]#sie' => '_lego_part_tag(\'\\1\')',
     '#\[part\:\s*([0-9a-zA-Z]+)?[,; ]\s*colo[u]?r\:\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
     '#\[part\:\s*([0-9a-zA-Z]+)?\s*[,;]\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
+    '#\[element\:\s*([0-9]+)?\s*\]#sie' => '_lego_element_tag(\'\\1\')',
     '#\[set\:\s*([0-9]+)?\s*\]#sie' => '_lego_set_tag(\'\\1-1\')',
     '#\[set\:\s*([0-9]+\-[0-9]+)?\s*\]#sie' => '_lego_set_tag(\'\\1\')',
   );
@@ -39,7 +43,6 @@ function _lego_part_tag($part = NULL, $color = NULL)
 function _lego_part_snippit($part = NULL, $color = NULL)
 {
   $lego_part = _lego_fetch_part($part);
-  //dpm($lego_part);
   if (isset($lego_part)) {
     // Use Rebrickable ID in further searches.
     $part = $lego_part->part_num;
@@ -98,7 +101,6 @@ function _lego_fetch_part($part_num, $reset = FALSE) {
   } else {
     // Fetch the part data.
     $part_info = _lego_rebrickable_part_fetch($part_num);
-    //dpm($part_info);
     if (isset($part_info->part_num)) {
       // Save the properties we need into a new object.
       $lego_part = (object) [
@@ -184,7 +186,6 @@ function _lego_fetch_colors($reset = FALSE) {
     } else {
       // No cached data so fetch from Rebrickable.
       $colors = _lego_rebrickable_colors_fetch();
-//dd($colors);
       $ids = [];
       $names = [];
       foreach ($colors->results as $color) {
@@ -233,29 +234,155 @@ function _lego_fetch_colors($reset = FALSE) {
 
 function _lego_rebrickable_part_fetch($part_no) {
 
-  $part_info = _lego_json_fetch(_lego_rebrickable_part_url($part_no));
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_lego_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
+  // Store the best match so far.
+  $best_part = NULL;
+  $best_key = NULL;
+
+  // Use the Rebrickable part search call. This allows multiple external IDs to be matched with a single call.
+  $results = _lego_json_fetch(_lego_rebrickable_search_part_url($part_no));
+  if (!empty($results) && $results->count > 0) {
+    // There could be several parts returned (e.g. printed parts will generally also return the unprinted version.
+    // Loop through found parts to check at least one part number matches.
+    foreach ($results->results as $part) {
+      // Match on Rebrickable part no.
+      if ($part->part_num == $part_no) {
+        // Find the key in the ranking, and see if it's lower than current ranking.
+        $key = array_search('Rebrickable', SOURCES);
+        if (!is_null($key) && (is_null($best_key) || $key < $best_key)) {
+          $best_part = $part;
+          $best_key = $key;
+        }
+      }
+      // Check if any external ID matches.
+      if (isset($part->external_ids)) {
+        // Loop through all external systems.
+        foreach ($part->external_ids as $source => $extids) {
+          // Loop through all IDs for external system.
+          foreach ($extids as $extid) {
+            // Check if ID is exact match.
+            if ($extid == $part_no) {
+              // Find the key in the ranking, and see if it's lower than current ranking.
+              $key = array_search($source, SOURCES);
+              if (!is_null($key) && (is_null($best_key) || $key < $best_key)) {
+                $best_part = $part;
+                $best_key = $key;
+              }
+            }
+          }
+        }
+      }
+    }
+    return $best_part;
   }
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_bricklink_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
-  }
-  if (!isset($part_info->part_num)) {
-    $results = _lego_json_fetch(_lego_rebrickable_brickowl_part_url($part_no));
-    if ($results->count > 0)
-      $part_info = $results->results[0];
-  }
-  return $part_info;
+
+  // Nothing found, so return null.
+  return NULL;
 
 }
 
 
 /*
- * Functions for converting part set.
+ * Functions for converting element tag.
+ */
+
+function _lego_element_tag($element = NULL)
+{
+  // Display placeholder for JavaScript to replace with element image...
+  return '<div class="brick-filter-element" element="'.$element.'">Fetching element '.$element.'...</div>';
+}
+
+function _lego_element_snippit($element = NULL)
+{
+dd ($element, "Snippit element");
+  $lego_part = _lego_fetch_element($element);
+dd ($lego_part, "Snippit part");
+  if (isset($lego_part)) {
+    // Use Rebrickable ID in further searches.
+    $part = $lego_part->part_num;
+    $colorname = '';
+    $rebrickable_link = '';
+    $brickset_link = '';
+    $bricklink_link = '';
+    $brickowl_link = '';
+    $colorname = t('%color (%legocolor)', ['%color' => $lego_part->color_name, '%legocolor' => $lego_part->lego_color_name]).' - ';
+    $element = '<br />'.t('Element: %element', ['%element' => $lego_part->element]);
+    if (isset($lego_part->part_url))
+      $rebrickable_link = '<span class="lego-filter-rebrickable-icon"><a href="'.$lego_part->part_url.'" title="Rebrickable"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/rebrickable_icon.png" alt="Rebrickable" />'.($lego_part->display_part_num != $lego_part->part_num ? $lego_part->part_num : '').'</a></span>';
+    if (isset($lego_part->brickset_id))
+      $brickset_link = '<span class="lego-filter-brickset-icon"><a href="'.BRICKSET_PART_URL.$lego_part->brickset_id.'" title="Brickset"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickset_icon.png" alt="Brickset" /></a></span>';
+    $bricklink_link = '<span class="lego-filter-bricklink-icon"><a href="'.BRICKLINK_PART_URL.$lego_part->bricklink_id.'" title="BrickLink"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/bricklink_icon.png" alt="BrickLink" />'.($lego_part->display_part_num != $lego_part->bricklink_id ? $lego_part->bricklink_id : '').'</a></span>';
+    $brickowl_link = '<span class="lego-filter-brickowl-icon"><a href="'.BRICKOWL_PART_URL.$lego_part->brickowl_id.'" title="Brick Owl"><img src="/'.drupal_get_path('module', 'lego_filter').'/images/brickowl_icon.png" alt="Brick Owl" />'.($lego_part->display_part_num != $lego_part->brickowl_id ? $lego_part->brickowl_id : '').'</a></span>';
+    // Get clickable Rebrickable icon.
+    return '<div class="lego-filter-part"><a href="'.$lego_part->part_img_url.'" rel="lightbox" title="'.$lego_part->name.'"><img src="'.$lego_part->part_img_url.'" alt="'.$lego_part->name.'" class="lego-filter-part-image" /></a><br />'.$lego_part->display_part_num.': '.$colorname.$lego_part->name.' '.$rebrickable_link.$brickset_link.$bricklink_link.$brickowl_link.$element.'</div>';
+  } else {
+    return '<div>'.t('Unknown element: %element', ['%element' => $element]).'</div>';
+  }
+}
+
+function _lego_fetch_element($element, $reset = FALSE) {
+  $cache_key = 'lego_filter_element_'.$element;
+  if (!$reset && ($cache = cache_get($cache_key))) {
+    // Use cached element data.
+    return $cache->data;
+  } else {
+dd($element, "Fetching element");
+    // Fetch the element data.
+    $element_info = _lego_rebrickable_element_fetch($element);
+    if (isset($element_info->part) && isset($element_info->part->part_num)) {
+      // Save the properties we need into a new object.
+      $lego_part = (object) [
+        'part_num' => $element_info->part->part_num,
+        'display_part_num' => $element_info->part->part_num,
+        'name' => $element_info->part->name,
+        'part_url' => $element_info->part->part_url,
+        'part_img_url' => $element_info->part_img_url,
+        'element' => $element_info->element_id,
+        'color_name' => $element_info->color->name,
+        'lego_color_name' => $element_info->color->external_ids->LEGO->ext_descrs[0][0],
+      ];
+      // Look up BrickLink ID, if different.
+      if (isset($element_info->part->external_ids->BrickLink[0]))
+        $lego_part->bricklink_id = $element_info->part->external_ids->BrickLink[0];
+      else
+        $lego_part->bricklink_id = $element_info->part->part_num;
+      // Look up BrickOwl ID, if different.
+      if (isset($element_info->part->external_ids->BrickOwl[0]))
+        $lego_part->brickowl_id = $element_info->part->external_ids->BrickOwl[0];
+      else
+        $lego_part->brickowl_id = $element_info->part->part_num;
+      // Check if part exists on BrickSet for part number.
+      if (is_numeric($element_info->part->part_num))
+        $lego_part->brickset_id = $element_info->part->part_num;
+      elseif (isset($element_info->part->external_ids->LEGO[0]) && is_numeric($element_info->external_ids->LEGO[0]))
+        $lego_part->brickset_id = $element_info->part->external_ids->LEGO[0];
+      // Save part to cache.
+      cache_set($cache_key, $lego_part, 'cache', time() + _lego_cache_interval());
+      return $lego_part;
+    } else {
+      return NULL;
+    }
+  }
+}
+
+
+function _lego_rebrickable_element_fetch($element) {
+
+  // Use the Rebrickable part search call. This allows multiple external IDs to be matched with a single call.
+dd($element, "Rebrickable fetch");
+  $results = _lego_json_fetch(_lego_rebrickable_element_url($element), FALSE);
+dd($results->element_id, "Rebrickable results");
+  if (!empty($results) && !empty($results->part)) {
+    return $results;
+  }
+
+  // Nothing found, so return null.
+  return NULL;
+
+}
+
+
+/*
+ * Functions for converting set tag.
  */
 
 
@@ -370,28 +497,43 @@ function _lego_fetch_set($set_num, $reset = FALSE) {
 function _lego_rebrickable_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/$part/?key=$key";
+  return REBRICKABLE_API_URL."parts/?part_num=$part&key=$key";
 
 }
 
 function _lego_rebrickable_lego_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?lego_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?lego_id=$part&key=$key";
 
 }
 
 function _lego_rebrickable_bricklink_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?bricklink_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?bricklink_id=$part&key=$key";
 
 }
 
 function _lego_rebrickable_brickowl_part_url($part) {
 
   $key = variable_get("rebrickable_api_key", '');
-  return REBRICKABLE_API_URL."parts/?brickowl_id=$part;key=$key";
+  return REBRICKABLE_API_URL."parts/?brickowl_id=$part&key=$key";
+
+}
+
+function _lego_rebrickable_search_part_url($part) {
+
+  $key = variable_get("rebrickable_api_key", '');
+  return REBRICKABLE_API_URL."parts/?page_size=500&search=$part&key=$key";
+
+}
+
+function _lego_rebrickable_element_url($element) {
+
+  $key = variable_get("rebrickable_api_key", '');
+dd(REBRICKABLE_API_URL."elements/$element/?key=$key", "URL");
+  return REBRICKABLE_API_URL."elements/$element/?key=$key";
 
 }
 
@@ -462,6 +604,7 @@ function _lego_json_fetch($url, $sleep=TRUE) {
   if ($sleep)
     sleep(rand(1, 10));
   while ($json = @file_get_contents($url)) {
+dd($http_response_header[0], "Header response");
     if (preg_match('/200/', $http_response_header[0])) {
       $part_info = json_decode($json);
       return $part_info;
