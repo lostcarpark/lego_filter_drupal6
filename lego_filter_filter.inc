@@ -325,7 +325,6 @@ function _lego_fetch_element($element, $reset = FALSE) {
     // Use cached element data.
     return $cache->data;
   } else {
-dd($element, "Fetching element");
     // Fetch the element data.
     $element_info = _lego_rebrickable_element_fetch($element);
     if (isset($element_info->part) && isset($element_info->part->part_num)) {
@@ -368,9 +367,7 @@ dd($element, "Fetching element");
 function _lego_rebrickable_element_fetch($element) {
 
   // Use the Rebrickable part search call. This allows multiple external IDs to be matched with a single call.
-dd($element, "Rebrickable fetch");
-  $results = _lego_json_fetch(_lego_rebrickable_element_url($element), FALSE);
-dd($results->element_id, "Rebrickable results");
+  $results = _lego_json_fetch(_lego_rebrickable_element_url($element));
   if (!empty($results) && !empty($results->part)) {
     return $results;
   }
@@ -532,7 +529,6 @@ function _lego_rebrickable_search_part_url($part) {
 function _lego_rebrickable_element_url($element) {
 
   $key = variable_get("rebrickable_api_key", '');
-dd(REBRICKABLE_API_URL."elements/$element/?key=$key", "URL");
   return REBRICKABLE_API_URL."elements/$element/?key=$key";
 
 }
@@ -604,7 +600,6 @@ function _lego_json_fetch($url, $sleep=TRUE) {
   if ($sleep)
     sleep(rand(1, 10));
   while ($json = @file_get_contents($url)) {
-dd($http_response_header[0], "Header response");
     if (preg_match('/200/', $http_response_header[0])) {
       $part_info = json_decode($json);
       return $part_info;
