@@ -153,7 +153,8 @@ function lego_filter_test_set() {
   include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
   $content = "<div>This page is to test LEGO set tags.</div>";
   $content .= '<div>Checking Key' . file_get_contents(_lego_brickset_check_url()) . '</div>';
-  $content .= '<div>Rebrickable set results: ' . print_r(_lego_rebrickable_set_fetch('928-1'), TRUE) . '</div>';
+  $content .= '<div>Rebrickable set results: ' . print_r(_lego_rebrickable_set_fetch('928-1'), FALSE) . '</div>';
+  $content .= '<div>Brickset set results: ' . print_r(_lego_brickset_set_fetch('928-1'), FALSE) . '</div>';
   return $content;
 }
 
