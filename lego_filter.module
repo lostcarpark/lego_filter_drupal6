@@ -74,29 +74,29 @@ function lego_filter_filter($op, $delta = 0, $format = -1, $text = '') {
     case 'settings':
       $form = array();
       $form['lego_filter'] = array(
-        '#type' => 'fieldset', 
-        '#title' => t('LEGO filter'), 
-        '#collapsible' => TRUE, 
+        '#type' => 'fieldset',
+        '#title' => t('LEGO filter'),
+        '#collapsible' => TRUE,
         '#collapsed' => FALSE);
       $form['lego_filter']["rebrickable_api_key"] = array(
-        '#type' => 'textfield', 
-        '#title' => t('Rebrickable API Key'), 
-        '#default_value' => variable_get("rebrickable_api_key", ''), 
+        '#type' => 'textfield',
+        '#title' => t('Rebrickable API Key'),
+        '#default_value' => variable_get("rebrickable_api_key", ''),
         '#description' => t('API Key from rebrickable.com, required for data lookups.'));
       $form['lego_filter']["brickset_api_key"] = array(
-        '#type' => 'textfield', 
-        '#title' => t('Brickset API Key'), 
-        '#default_value' => variable_get("brickset_api_key", ''), 
+        '#type' => 'textfield',
+        '#title' => t('Brickset API Key'),
+        '#default_value' => variable_get("brickset_api_key", ''),
         '#description' => t('API Key from brickset.com, required for data lookups.'));
       $form['lego_filter']["brickcat_api_key"] = array(
-        '#type' => 'textfield', 
-        '#title' => t('BrickCat API Key'), 
-        '#default_value' => variable_get("brickcat_api_key", ''), 
+        '#type' => 'textfield',
+        '#title' => t('BrickCat API Key'),
+        '#default_value' => variable_get("brickcat_api_key", ''),
         '#description' => t('API Key from brickcat.com, required for data lookups.'));
       $form['lego_filter']["brickcat_country"] = array(
-        '#type' => 'textfield', 
-        '#title' => t('BrickCat Country'), 
-        '#default_value' => variable_get("brickcat_country", ''), 
+        '#type' => 'textfield',
+        '#title' => t('BrickCat Country'),
+        '#default_value' => variable_get("brickcat_country", ''),
         '#description' => t('2-char country code for BrickCat lookups.'));
       return $form;
 
@@ -125,35 +125,31 @@ function lego_filter_init()
 }
 
 
-function lego_filter_part($part, $color)
-{
+function lego_filter_part($part, $color) {
   // Print out HTML directly.
   include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
-  print (_lego_part_snippit($part, $color));
+  print (_lego_part_snippit($part, $color, TRUE));
   // Return success.
   exit(0);
 }
 
-function lego_filter_element($element)
-{
+function lego_filter_element($element) {
   // Print out HTML directly.
   include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
-  print (_lego_element_snippit($element, $color));
+  print (_lego_element_snippit($element, $color, TRUE));
   // Return success.
   exit(0);
 }
 
-function lego_filter_set($set)
-{
+function lego_filter_set($set) {
   // Print out HTML directly.
   include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
-  print (_lego_set_snippit($set));
+  print (_lego_set_snippit($set, TRUE));
   // Return success.
   exit(0);
 }
 
-function lego_filter_test_set()
-{
+function lego_filter_test_set() {
   include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
   $content = "<div>This page is to test LEGO set tags.</div>";
   $content .= '<div>Checking Key' . file_get_contents(_lego_brickset_check_url()) . '</div>';
@@ -161,3 +157,30 @@ function lego_filter_test_set()
   return $content;
 }
 
+/**
+ * Implementation of hook_cron().
+ *
+ * Checks news feeds for updates once their refresh interval has elapsed.
+ */
+function lego_filter_cron() {
+  include_once(drupal_get_path('module', 'lego_filter') .'/lego_filter_filter.inc');
+
+    // Check if colors due a refresh.
+  $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key = 'lego_filter_colors' AND refresh_time < %d order by refresh_time", time());
+  if (db_fetch_array($result)) {
+    // If any results returned, reload colors from API.
+    _lego_fetch_colors(TRUE, FALSE);
+  }
+
+  $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_parts%' AND refresh_time < %d order by refresh_time LIMIT 5", time());
+  while ($item = db_fetch_array($result)) {
+    $part_num = substr($item['item_key'], 18);
+    _lego_fetch_part($part_num, TRUE, FALSE);
+  }
+
+  $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_sets%' AND refresh_time < %d order by refresh_time LIMIT 5", time());
+  while ($item = db_fetch_array($result)) {
+    $set_num = substr($item['item_key'], 17);
+    _lego_fetch_set($set_num, TRUE, FALSE);
+  }
+}
