@@ -454,6 +454,9 @@ function _lego_fetch_set($set_num, $reset = FALSE, $sleep = TRUE) {
 
       }
     }
+    _lego_save_refresh_time($key_name, MONTH);
+    variable_set($key_name, $set_info);
+    return $set_info;
     // If a set was found from either Briskset or Rebrickable,
     // if (!empty($set_info) && !empty($set_info->number)) {
     //   $brickCat = new BrickCatApi(variable_get("brickcat_api_key", ''));
@@ -469,9 +472,6 @@ function _lego_fetch_set($set_num, $reset = FALSE, $sleep = TRUE) {
     //     if ($result->status)
     //       $set_info->legoURL = $result->link;
     //   }
-    //   _lego_save_refresh_time($key_name, MONTH);
-    //   variable_set($key_name, $set_info);
-    //   return $set_info;
     // } else {
     //   return NULL;
     // }
@@ -656,9 +656,9 @@ function _lego_save_refresh_time($item_key, $interval) {
   db_query(
     "insert into {lego_filter_refresh_time} (item_key, fetch_time, refresh_time) values ('%s', '%d', %d) on duplicate key update fetch_time = %d, refresh_time = %d",
     $item_key,
+    $fetch_time,
     $refresh_time,
-    $refresh_time,
-    $refresh_time,
+    $fetch_time,
     $refresh_time
   );
 }
