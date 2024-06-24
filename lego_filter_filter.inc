@@ -7,6 +7,7 @@ define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
 define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
+define('IMMEDIATE', 0);
 define('DAY', 24 * 60 * 60);
 define('FORTNIGHT', 14 * DAY);
 define('MONTH', 30 * DAY);
@@ -105,6 +106,8 @@ function _lego_fetch_part($part_num, $reset = FALSE, $sleep = TRUE) {
     // Use cached part data.
     return $lego_part;
   } else {
+    // Save to refresh table in case part fetch fails.
+    _lego_save_refresh_time($key_name, IMMEDIATE);
     // Fetch the part data.
     $part_info = _lego_rebrickable_part_fetch($part_num, $sleep);
     if (isset($part_info->part_num)) {
@@ -334,6 +337,8 @@ function _lego_fetch_element($element_id, $reset = FALSE, $sleep = TRUE) {
     // Use cached element data.
     return $element_info;
   } else {
+    // Save to refresh table in case part fetch fails.
+    _lego_save_refresh_time($key_name, IMMEDIATE);
     // Fetch the element data.
     $element_info = _lego_rebrickable_element_fetch($element_id, $sleep);
 
@@ -413,6 +418,8 @@ function _lego_fetch_set($set_num, $reset = FALSE, $sleep = TRUE) {
     // Use cached set data.
     return $set_info;
   } else {
+    // Save to refresh table in case part fetch fails.
+    _lego_save_refresh_time($key_name, IMMEDIATE);
     // Fetch the set data.
     $result = _lego_brickset_set_fetch($set_num);
     if (isset($result->sets[0]->number)) {
@@ -612,7 +619,7 @@ function _lego_json_fetch($url, $sleep=TRUE) {
       return $part_info;
     } else if (preg_match('/429/', $http_response_header[0])) {
       // 429 return code means too many calls. Sleep for a random number of seconds and try again.
-      sleep(rand(5, 30));
+      sleep(rand(5, 10));
     } else {
       return null;
     }
@@ -665,3 +672,9 @@ function _lego_save_refresh_time($item_key, $interval) {
   );
 }
 
+function _lego_delete_refresh_time($item_key) {
+  db_query(
+    "delete from {lego_filter_refresh_time} where item_key = '%s'",
+    $item_key
+  );
+}

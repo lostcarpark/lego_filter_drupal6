@@ -173,12 +173,32 @@ function lego_filter_cron() {
     _lego_fetch_colors(TRUE, FALSE);
   }
 
-  $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_parts%' AND refresh_time < %d order by refresh_time LIMIT 5", time());
+  // If there are elements in the refresh table, they are ones that have failed
+  // to load, so we should prioritise those.
+  $fetched_elements = FALSE;
+  // Each element fetch takes 3 API calls, so only do 3 at a time.
+  $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_element%' AND refresh_time < %d order by refresh_time LIMIT 3", time());
   while ($item = db_fetch_array($result)) {
-    $part_num = substr($item['item_key'], 18);
-    _lego_fetch_part($part_num, TRUE, FALSE);
+    $element_id = substr($item['item_key'], 20);
+    _lego_fetch_element($element_id, TRUE, FALSE);
+    $fetched_elements = TRUE;
+    // After fetching element, delete from lego_filter_refresh_time table.
+    // Further updates will be covered by part.
+    _lego_delete_refresh_time($item['item_key']);
   }
 
+  // If we have fetched elements, we probably don't have enough Rebrickable API
+  // calls left to do parts as well.
+  if (!$fetched_elements) {
+    $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_parts%' AND refresh_time < %d order by refresh_time LIMIT 5", time());
+    while ($item = db_fetch_array($result)) {
+      $part_num = substr($item['item_key'], 18);
+      _lego_fetch_part($part_num, TRUE, FALSE);
+    }
+  }
+
+  // As sets should be coming from BrickSet, no problem loading these after
+  // elements and/or parts.
   $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_sets%' AND refresh_time < %d order by refresh_time LIMIT 5", time());
   while ($item = db_fetch_array($result)) {
     $set_num = substr($item['item_key'], 17);
