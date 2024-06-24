@@ -619,7 +619,7 @@ function _lego_json_fetch($url, $sleep=TRUE) {
       return $part_info;
     } else if (preg_match('/429/', $http_response_header[0])) {
       // 429 return code means too many calls. Sleep for a random number of seconds and try again.
-      sleep(rand(5, 30));
+      sleep(rand(5, 10));
     } else {
       return null;
     }

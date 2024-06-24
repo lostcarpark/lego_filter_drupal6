@@ -180,12 +180,11 @@ function lego_filter_cron() {
   $result = db_query("SELECT * FROM {lego_filter_refresh_time} WHERE item_key like 'lego_filter_element%' AND refresh_time < %d order by refresh_time LIMIT 3", time());
   while ($item = db_fetch_array($result)) {
     $element_id = substr($item['item_key'], 20);
-    if (_lego_fetch_element($element_id, TRUE, FALSE)) {
-      $fetched_elements = TRUE;
-      // After fetching element, delete from lego_filter_refresh_time table.
-      // Further updates will be covered by part.
-      _lego_delete_refresh_time($item['item_key']);
-    }
+    _lego_fetch_element($element_id, TRUE, FALSE);
+    $fetched_elements = TRUE;
+    // After fetching element, delete from lego_filter_refresh_time table.
+    // Further updates will be covered by part.
+    _lego_delete_refresh_time($item['item_key']);
   }
 
   // If we have fetched elements, we probably don't have enough Rebrickable API
