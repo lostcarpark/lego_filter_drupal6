@@ -61,7 +61,7 @@ function _lego_part_snippit($part = NULL, $color = NULL, $sleep = TRUE) {
     $brickset_link = '';
     $bricklink_link = '';
     $brickowl_link = '';
-    if (!empty($color)) {
+    if (!is_null($color)) {
       $colors = _lego_fetch_colors();
       // If color name, look up
       if (!is_numeric($color)) {
@@ -139,21 +139,23 @@ function _lego_fetch_part($part_num, $reset = FALSE, $sleep = TRUE) {
         $lego_part->brickset_id = $part_info->external_ids->LEGO[0];
       // Now fetch all colours for the part.
       $color_info = _lego_rebrickable_part_all_colors_fetch($part_num, $sleep);
-      $colors = [];
-      foreach ($color_info->results as $color) {
-        $colors[$color->color_id] = (object) [
-          'color_name' => $color->color_name,
-          'part_img_url' => $color->part_img_url,
-          'elements' => $color->elements,
-        ];
-        foreach ($color->elements as $element_id) {
-          _lego_store_element($element_id, $part_info->part_num, $color->color_id);
+      if ($color_info) {
+        $colors = [];
+        foreach ($color_info->results as $color) {
+          $colors[$color->color_id] = (object) [
+            'color_name' => $color->color_name,
+            'part_img_url' => $color->part_img_url,
+            'elements' => $color->elements,
+          ];
+          foreach ($color->elements as $element_id) {
+            _lego_store_element($element_id, $part_info->part_num, $color->color_id);
+          }
         }
+        // Save part to cache - only if both part and color fetch successful.
+        $lego_part->colors = $colors;
+        variable_set($key_name, $lego_part, 'cache');
+        _lego_save_refresh_time($key_name, FORTNIGHT);
       }
-      // Save part to cache.
-      $lego_part->colors = $colors;
-      variable_set($key_name, $lego_part, 'cache');
-      _lego_save_refresh_time($key_name, FORTNIGHT);
       return $lego_part;
     } else {
       return NULL;
@@ -320,7 +322,7 @@ function _lego_element_tag($element_id = NULL) {
 function _lego_element_snippit($element_id = NULL, $sleep = TRUE) {
   $element_info = _lego_fetch_element($element_id, $sleep);
   if (isset($element_info)) {
-    return _lego_part_snippit($element_info->part_num, $element_info->color_id);
+    return _lego_part_snippit($element_info->part_num, $element_info->color_id, $sleep);
   } else {
     return '<div>'.t('Unknown element: %element', ['%element' => $element_id]).'</div>';
   }
