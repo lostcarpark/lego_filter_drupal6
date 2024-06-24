@@ -7,6 +7,7 @@ define("BRICKSET_PART_URL", "https://brickset.com/parts/design-");
 define("BRICKLINK_PART_URL", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=");
 define("BRICKOWL_PART_URL", "https://www.brickowl.com/search/catalog?query=");
 
+define('IMMEDIATE', 0);
 define('DAY', 24 * 60 * 60);
 define('FORTNIGHT', 14 * DAY);
 define('MONTH', 30 * DAY);
@@ -105,6 +106,8 @@ function _lego_fetch_part($part_num, $reset = FALSE, $sleep = TRUE) {
     // Use cached part data.
     return $lego_part;
   } else {
+    // Save to refresh table in case part fetch fails.
+    _lego_save_refresh_time($key_name, FORTNIGHT);
     // Fetch the part data.
     $part_info = _lego_rebrickable_part_fetch($part_num, $sleep);
     if (isset($part_info->part_num)) {
