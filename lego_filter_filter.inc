@@ -22,14 +22,14 @@ function _lego_filter_process(&$body, $format = -1) {
   // Define Lego tags
   $preg = array(
     // Convert part no to picture
-    '#\[part\:\s*([0-9a-zA-Z]+)?\s*\]#sie' => '_lego_part_tag(\'\\1\')',
-    '#\[part\:\s*([0-9a-zA-Z]+)?[,; ]\s*colo[u]?r\:\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
-    '#\[part\:\s*([0-9a-zA-Z]+)?\s*[,;]\s*([-._0-9a-zA-Z ]+)\]#sie' => '_lego_part_tag(\'\\1\', \'\\2\')',
-    '#\[element\:\s*([0-9]+)?\s*\]#sie' => '_lego_element_tag(\'\\1\')',
-    '#\[set\:\s*([0-9]+)?\s*\]#sie' => '_lego_set_tag(\'\\1-1\')',
-    '#\[set\:\s*([0-9]+\-[0-9]+)?\s*\]#sie' => '_lego_set_tag(\'\\1\')',
+    '#\[part\:\s*([0-9a-zA-Z]+)?\s*\]#si' => function ($m) { return _lego_part_tag($m[1] ?? ''); },
+    '#\[part\:\s*([0-9a-zA-Z]+)?[,; ]\s*colo[u]?r\:\s*([-._0-9a-zA-Z ]+)\]#si' => function ($m) { return _lego_part_tag($m[1], $m[2]); },
+    '#\[part\:\s*([0-9a-zA-Z]+)?\s*[,;]\s*([-._0-9a-zA-Z ]+)\]#si' => function ($m) { return _lego_part_tag($m[1], $m[2]); },
+    '#\[element\:\s*([0-9]+)?\s*\]#si' => function ($m) { return _lego_element_tag($m[1] ?? ''); },
+    '#\[set\:\s*([0-9]+)?\s*\]#si' => function ($m) { return _lego_set_tag(($m[1] ?? '') . '-1'); },
+    '#\[set\:\s*([0-9]+\-[0-9]+)?\s*\]#si' => function ($m) { return _lego_set_tag($m[1] ?? ''); },
   );
-  $body = preg_replace(array_keys($preg), array_values($preg), $body);
+  $body = preg_replace_callback_array($preg, $body);
 
   return $body;
 }
